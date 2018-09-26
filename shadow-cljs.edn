@@ -1,0 +1,22 @@
+{:source-paths ["src"]
+ :dependencies [[cider/cider-nrepl "0.18.0"]
+                [org.clojure/tools.nrepl "0.2.13"]
+                [rum "0.11.2" :exclusions [cljsjs/react cljsjs/react-dom]]
+                [bidi "2.1.4"]
+                [kibu/pushy "0.3.8"]]
+ :builds {:app {:output-dir "target/"
+                :asset-path "."
+                :target :browser
+                :module-loader true
+                :modules {:main {:entries [app.main]}
+                          :page-home {:entries [app.pages.home]
+                                      :depends-on #{:main}}
+                          :page-todo {:entries [app.pages.todo]
+                                      :depends-on #{:main}}}
+                ; :module-hash-names true
+                ; :build-options {:manifest-name "manifest.json"}
+                ; :build-hooks [(app.util/hook)]
+                :devtools {:after-load app.main/reload!
+                           :http-root "target"
+                           :http-port 8080}
+                :release {:output-dir "dist/"}}}}
