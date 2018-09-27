@@ -20,7 +20,7 @@
           #((resolve 'app.pages.todo/todo-component)))
    :form (components/loadable
           #(loader/load "page-form")
-          #((resolve 'app.pages.contact_form/form-component)))})
+          #((resolve 'app.pages.contact_form/component)))})
 
 (defn get-component [route-state] (:component route-state))
 
