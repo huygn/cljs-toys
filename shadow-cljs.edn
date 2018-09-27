@@ -12,6 +12,8 @@
                           :page-home {:entries [app.pages.home]
                                       :depends-on #{:main}}
                           :page-todo {:entries [app.pages.todo]
+                                      :depends-on #{:main}}
+                          :page-form {:entries [app.pages.contact_form]
                                       :depends-on #{:main}}}
                 ; :module-hash-names true
                 ; :build-options {:manifest-name "manifest.json"}
