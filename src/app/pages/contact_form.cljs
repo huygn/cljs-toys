@@ -6,7 +6,13 @@
   rum/reactive
   (let [form-state (atom {})
         field-state (atom {})
-        form (fform/createForm #js {:onSubmit #(js/console.log %)})
+        form (fform/createForm #js {:onSubmit (fn [v f]
+                                                (js/console.log v f)
+                                                (js/Promise. (fn [resolve]
+                                                               (js/setTimeout
+                                                                #(do (js/console.log "submitted")
+                                                                     (resolve))
+                                                                500))))})
         unsubscribe (.subscribe form
                                 #(reset! form-state %)
                                 #js {:active true :pristine true :submitting true :values true})
@@ -32,8 +38,8 @@
                   state)})
   [state]
   (let [form (:form state)
-        form-state @(:form-state state)
-        field-state @(:field-state state)
+        form-state (rum/react (:form-state state))
+        field-state (rum/react (:field-state state))
         onsubmit (fn [e]
                    (.preventDefault e)
                    (.submit form))]
