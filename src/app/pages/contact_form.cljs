@@ -43,17 +43,17 @@
 (defn make-field [form]
   (rum/defcs field <
     rum/reactive
-    {:will-mount (fn [state]
-                   (let [field-name (-> state :rum/args first :name)
-                         subscription (-> state :rum/args first :subscription (or field-subscription-default))
-                         field-state (atom {})
-                         unsubscribe (.registerField form
-                                                     field-name
-                                                     #(reset! field-state %)
-                                                     (clj->js subscription))]
-                     (assoc state
-                            :unsubscribe unsubscribe
-                            :field-state field-state)))
+    {:init (fn [state]
+             (let [field-name (-> state :rum/args first :name)
+                   subscription (-> state :rum/args first :subscription (or field-subscription-default))
+                   field-state (atom {})
+                   unsubscribe (.registerField form
+                                               field-name
+                                               #(reset! field-state %)
+                                               (clj->js subscription))]
+               (assoc state
+                      :unsubscribe unsubscribe
+                      :field-state field-state)))
      :will-unmount (fn [state] ((:unsubscribe state)) state)}
 
     [state {:keys [name]} render]
@@ -85,7 +85,7 @@
                    (assoc state
                           :form-state form-state
                           :render-field render-field)))
-   :did-mount (fn [state] state)}
+   :will-unmount (fn [state] ((:unsubscribe state)) state)}
 
   [state opt render]
   (let [form (:form state)
