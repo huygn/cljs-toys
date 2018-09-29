@@ -43,11 +43,11 @@
 (defn with-form [form-opt fields]
   {:init (fn [state]
            (let [on-submit (:on-submit form-opt)
-                 initial-values (-> form-opt :initial-values clj->js)
+                 initial-values (:initial-values form-opt)
                  validate (:validate form-opt)
-                 form (fform/createForm #js {:onSubmit on-submit
-                                             :initialValues initial-values
-                                             :validate validate})]
+                 form (fform/createForm (clj->js {:onSubmit on-submit
+                                                  :initialValues initial-values
+                                                  :validate validate}))]
              (assoc state :form/form form)))
    :will-mount (fn [state]
                  (let [form (:form/form state)
