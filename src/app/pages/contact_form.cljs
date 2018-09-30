@@ -40,7 +40,51 @@
                                  :value true
                                  :visited true})
 
-(defn with-form [form-opt fields]
+(defn create-field [form]
+  (rum/defcs field <
+    rum/reactive
+    {:init (fn [state]
+             (let [opt (-> state :rum/args first)
+                   field-name (:name opt)
+                   subscription (-> opt :subscription (or field-subscription-default))
+                   field-state (atom {})
+                   unsubscribe (.registerField form
+                                               field-name
+                                               #(reset! field-state
+                                                        (js->clj % :keywordize-keys true))
+                                               (clj->js subscription))]
+               (assoc state
+                      :unsubscribe unsubscribe
+                      :field-state field-state)))
+     :will-unmount (fn [state]
+                     ((:unsubscribe state))
+                     state)}
+
+    [state {:keys [name]} render]
+    (let [field (rum/react (:field-state state))
+          {:keys [value change focus blur]} field
+          meta (select-keys field [:active
+                                   :data
+                                   :dirty
+                                   :dirtySinceLastSubmit
+                                   :error
+                                   :initial
+                                   :invalid
+                                   :pristine
+                                   :submitError
+                                   :submitFailed
+                                   :submitSucceeded
+                                   :touched
+                                   :valid
+                                   :visited])]
+      (render {:input {:name name
+                       :value (or value "")
+                       :on-change #(-> % .-target .-value change)
+                       :on-focus #(focus)
+                       :on-blur #(blur)}
+               :meta meta}))))
+
+(defn form-mixin [form-opt]
   {:init (fn [state]
            (let [on-submit (:on-submit form-opt)
                  initial-values (:initial-values form-opt)
@@ -52,7 +96,6 @@
    :will-mount (fn [state]
                  (let [form (:form/form state)
                        form-state (atom {})
-                       field-state (atom {})
                        form-subscription (-> form-opt
                                              :subscription
                                              (or form-subscription-default))
@@ -60,65 +103,28 @@
                                                     #(reset!
                                                       form-state
                                                       (js->clj % :keywordize-keys true))
-                                                    (clj->js form-subscription))
-                       unsubscribe-fields (doall
-                                           (map (fn [{name :name, sub :subscription}]
-                                                  (.registerField
-                                                   form
-                                                   name
-                                                   #(swap! field-state assoc name
-                                                           (js->clj % :keywordize-keys true))
-                                                   (-> sub
-                                                       (or field-subscription-default)
-                                                       clj->js)))
-                                                fields))]
+                                                    (clj->js form-subscription))]
                    (assoc state
                           :form/state form-state
-                          :fields/state field-state
                           :form/unsubscribe unsubscribe-form
-                          :fields/unsubscribe unsubscribe-fields
                           :form/submit! (fn [e]
                                           (.preventDefault e)
                                           (.submit form))
-                          :form/field (fn [name]
-                                        (let [field (get @field-state name)
-                                              {:keys [value change focus blur]} field
-                                              {:keys [active
-                                                      data
-                                                      dirty
-                                                      dirtySinceLastSubmit
-                                                      error
-                                                      initial
-                                                      invalid
-                                                      pristine
-                                                      submitError
-                                                      submitFailed
-                                                      submitSucceeded
-                                                      touched
-                                                      valid
-                                                      visited] :as meta} field]
-                                          {:input {:name name
-                                                   :value (or value "")
-                                                   :on-change #(-> % .-target .-value change)
-                                                   :on-focus #(focus)
-                                                   :on-blur #(blur)}
-                                           :meta meta})))))
+                          :form/render-field (create-field form))))
    :will-unmount (fn [state]
                    ((:form/unsubscribe state))
-                   (doseq [unsub (:fields/unsubscribe state)] (unsub))
                    state)})
 
 (rum/defcs component <
   rum/reactive
-  (with-form
-    {:on-submit #(js/console.log %)}
-    [{:name "firstName"}])
+  (form-mixin {:on-submit #(js/console.log %)})
   [state]
-  (let [form (:form/form state)
-        form-state (rum/react (:form/state state))
+  (let [form-state (-> state :form/state rum/react)
         submit! (:form/submit! state)
-        field (:form/field state)]
-    (js/console.log (field "firstName"))
+        field (:form/render-field state)]
+    (js/console.log "form-state" form-state)
     [:form {:on-submit submit!}
-     [:input (merge {:class "border"}
-                    (:input (field "firstName")))]]))
+     (field {:name "firstName"}
+            (fn [{:keys [input meta]}]
+              (js/console.log "field" input meta)
+              [:input (merge {:class "border"} input)]))]))
