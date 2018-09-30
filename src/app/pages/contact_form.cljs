@@ -84,38 +84,74 @@
                        :on-blur #(blur)}
                :meta meta}))))
 
-(defn form-mixin [form-opt]
+(defn create-form-mixin [form-opt-getter]
   {:init (fn [state]
-           (let [on-submit (:on-submit form-opt)
+           (let [form-opt (form-opt-getter state)
+                 on-submit (:on-submit form-opt)
                  initial-values (:initial-values form-opt)
                  validate (:validate form-opt)
                  form (fform/createForm (clj->js {:onSubmit on-submit
                                                   :initialValues initial-values
-                                                  :validate validate}))]
-             (assoc state :form/form form)))
-   :will-mount (fn [state]
-                 (let [form (:form/form state)
-                       form-state (atom {})
-                       form-subscription (-> form-opt
-                                             :subscription
-                                             (or form-subscription-default))
-                       unsubscribe-form (.subscribe form
-                                                    #(reset!
-                                                      form-state
-                                                      (js->clj % :keywordize-keys true))
-                                                    (clj->js form-subscription))]
-                   (assoc state
-                          :form/state form-state
-                          :form/unsubscribe unsubscribe-form
-                          :form/submit! (fn [e]
-                                          (.preventDefault e)
-                                          (.submit form))
-                          :form/render-field (create-field form))))
+                                                  :validate validate}))
+                 form-state (atom {})
+                 form-subscription (-> form-opt
+                                       :subscription
+                                       (or form-subscription-default))
+                 unsubscribe-form (.subscribe form
+                                              #(reset!
+                                                form-state
+                                                (js->clj % :keywordize-keys true))
+                                              (clj->js form-subscription))]
+             (assoc state
+                    :form/form form
+                    :form/state form-state
+                    :form/unsubscribe unsubscribe-form
+                    :form/submit! (fn [e]
+                                    (.preventDefault e)
+                                    (.submit form))
+                    :form/render-field (create-field form))))
    :will-unmount (fn [state]
                    ((:form/unsubscribe state))
                    state)})
 
-(rum/defcs component <
+(defn form-mixin [form-opt] (create-form-mixin #(identity form-opt)))
+
+(rum/defcs form <
+  rum/reactive
+  (create-form-mixin #(as-> % state (:rum/args state) (first state)))
+  [state opt render]
+  (let [form (:form/form state)
+        form-state (rum/react (:form/state state))
+        submit! (:form/submit! state)
+        render-field (:form/render-field state)]
+    (render {:form form
+             :form-state form-state
+             :submit! submit!
+             :render-field render-field})))
+
+; use `form` component
+(rum/defc component []
+  (form {:on-submit (fn [v f]
+                      (js/console.log v f)
+                      (js/Promise. (fn [resolve]
+                                     (js/setTimeout
+                                      #(do (js/console.log "submitted")
+                                           (resolve))
+                                      500))))}
+        (fn [{:keys [form-state submit! render-field]}]
+          (js/console.log "form-state" form-state)
+          [:form {:on-submit submit!}
+           (render-field {:name "firstName"}
+                         (fn [{:keys [input meta]}]
+                           (js/console.log "field" input meta)
+                           [:input (merge input {:class "border"})]))
+           [:button {:type "submit"
+                     :disabled (:submitting form-state)
+                     :class "px-3 py-2 text-white bg-blue rounded-sm"}
+            "Submit"]])))
+
+; use `form-mixin`
+(rum/defcs component-2 <
   rum/reactive
   (form-mixin {:on-submit #(js/console.log %)})
   [state]
