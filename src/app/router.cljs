@@ -8,7 +8,8 @@
 
 (def app-routes
   ["/" {"" :home
-        "todo" :todo}])
+        "todo" :todo
+        "form" :form}])
 
 (def components
   {:home (components/loadable
@@ -16,7 +17,10 @@
           #((resolve 'app.pages.home/home-component)))
    :todo (components/loadable
           #(loader/load "page-todo")
-          #((resolve 'app.pages.todo/todo-component)))})
+          #((resolve 'app.pages.todo/todo-component)))
+   :form (components/loadable
+          #(loader/load "page-form")
+          #((resolve 'app.pages.contact_form/component)))})
 
 (defn get-component [route-state] (:component route-state))
 

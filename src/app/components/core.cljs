@@ -5,7 +5,8 @@
 (rum/defc with-header [component]
   [:div
    [:nav.h-16.flex.items-center.mb-16
-    [:a {:href "/"} "Back"]]
+    [:a {:href "/"} "Back"]
+    [:a {:href "/form"} "Form"]]
    (component)])
 
 (defn adapt-react-class [react-class]
