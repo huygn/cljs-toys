@@ -5,5 +5,5 @@
   [:div#home.pt-8
    [:h1.mb-4 "Home"]
    [:nav
-    [:a {:href "/todo"} "Todo"]
-    [:a {:href "/form"} "Form"]]])
+    [:a.block {:href "/todo"} "Todo"]
+    [:a.block {:href "/form"} "Form"]]])
