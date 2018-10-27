@@ -7,11 +7,11 @@
     "dev": "shadow-cljs watch app",
     "compile": "shadow-cljs compile app",
     "release": "shadow-cljs release app",
-    "html": "mkdir -p target && cp assets/index.html target/",
-    "html:release": "mkdir -p dist && cp assets/index.html dist/",
-    "serve": "yarn html:release && http-server dist/",
+    "assets": "mkdir -p target && cp assets/* target/",
+    "assets:release": "mkdir -p dist && cp assets/* dist/",
+    "serve": "yarn assets:release && http-server dist/",
     "del": "rm -r target/*",
-    "build": "yarn release && yarn html && yarn serve"
+    "build": "yarn release && yarn serve"
   },
   "author": "",
   "license": "MIT",
