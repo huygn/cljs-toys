@@ -7,8 +7,8 @@
     "dev": "shadow-cljs watch app",
     "compile": "shadow-cljs compile app",
     "release": "shadow-cljs release app",
-    "assets": "mkdir -p target && cp assets/* target/",
-    "assets:release": "mkdir -p dist && cp assets/* dist/",
+    "assets": "mkdir -p target && cp -R assets/* target/",
+    "assets:release": "mkdir -p dist && cp -R assets/* dist/",
     "serve": "yarn assets:release && http-server dist/",
     "del": "rm -r target/*",
     "build": "yarn release && yarn serve"
